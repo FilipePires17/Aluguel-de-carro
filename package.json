@@ -1,0 +1,27 @@
+{
+  "name": "aluguel-de-carro",
+  "version": "1.0.0",
+  "description": "sistema que possibilita que usuarios cadastrados aluguem carros",
+  "main": "app.js",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "express-handlebars": "^5.2.1",
+    "mysql": "^2.18.1",
+    "nodemon": "^2.0.7"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FilipePires17/Aluguel-de-carro.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FilipePires17/Aluguel-de-carro/issues"
+  },
+  "homepage": "https://github.com/FilipePires17/Aluguel-de-carro#readme"
+}
