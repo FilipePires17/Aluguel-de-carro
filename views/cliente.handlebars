@@ -1,7 +1,10 @@
 <a href="/">Voltar</a>
-<form name="login" action="home" method="POST">
+{{#each erros}}
+<div class="alert alert-danger">{{texto}}</div>
+{{/each}}
+<form name="login" action="" method="POST">
     <label>Usuario</label>
     <input type="text" name="user" id="user" placeholder="Usuário"/><br/>
     <input type="submit" name="login" id="login" value="Login"/><br/>
 </form>
-<a href="cadastro">Cadastre-se</a>
+<a href="/cliente_cadastro">Cadastre-se</a>

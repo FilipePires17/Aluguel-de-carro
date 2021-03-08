@@ -5,10 +5,13 @@
   "main": "app.js",
   "dependencies": {
     "body-parser": "^1.19.0",
+    "connect-flash": "^0.1.1",
     "express": "^4.17.1",
     "express-handlebars": "^5.2.1",
+    "express-session": "^1.17.1",
     "mysql": "^2.18.1",
-    "nodemon": "^2.0.7"
+    "nodemon": "^2.0.7",
+    "req-flash": "0.0.3"
   },
   "devDependencies": {},
   "scripts": {

@@ -4,12 +4,27 @@ const handlebars = require('express-handlebars');
 const bodyParser = require('body-parser');
 const urlEncodeParser = bodyParser.urlencoded({extended:false});
 const app = express();
+const session = require('express-session');
+const flash = require('connect-flash');
 const sql = mysql.createConnection({
     host: 'localhost',
     user: 'nodeuser',
     password: 'mypassword',
-    database = 'mydb'
+    database: 'mydb'
+});
+
+app.use(session({
+    secret: 'primeirocrud',
+    resave: true,
+    saveUninitialized: true
+}));
+app.use(flash());
+app.use((req, res, next) => {
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    next();
 })
+
 app.use('/css', express.static('css'));
 app.use('/js', express.static('js'));
 
@@ -19,18 +34,87 @@ app.set('view engine', 'handlebars');
 // Inicial
 app.get('/', function(req, res){
     res.render('index');
-})
+});
 // Cliente
 app.get('/cliente', function(req, res){
     res.render('cliente');
-})
-app.post('/home',urlEncodeParser, function(req, res){
-})
+});
+app.get('/cliente_cadastro', function(req, res){
+    res.render('cliente_cadastro');
+});
+app.get('/home', function(req, res){
+    res.render('home');
+});
+app.post('/cliente_cadastro', urlEncodeParser, function(req, res){
+    var erros = [];
+    let isAvailable = true;
+
+    if(!req.body.user){
+        erros.push({texto: "Usuario invalido"});
+    }
+    if(!req.body.name){
+        erros.push({texto: "Nome invalido"});
+    }
+    if(!req.body.cnh){
+        erros.push({texto: "CNH invalida"});
+    }
+    if(!req.body.adress){
+        erros.push({texto: "Endereço invalido"});
+    }
+
+    if(erros.length > 0){
+        res.render("cliente_cadastro", {erros: erros})
+    } else {
+        sql.query('select * from cliente', function(err, results, fields){
+            if(err) throw err;
+            for (let i = 0; i < results.length; i++) {
+                if(req.body.user == results[0].CodCli){
+                    isAvailable = false;
+                    req.flash('error_msg', 'Nome de usuario indisponivel');
+                    res.redirect('/cliente_cadastro');
+                    break;
+                }                
+            }
+        if(isAvailable){
+            sql.query('insert into cliente values(?, ?, ?, ?)',
+            [req.body.user, req.body.name, req.body.cnh, req.body.adress]);
+            sql.query('insert into telefone values(?, ?)',
+            [req.body.user, req.body.phone]);
+            req.flash('success_msg', 'Cadastrado com sucesso');
+            res.redirect('/cliente');
+        }
+        });
+    }
+
+});
 app.post('/cliente', urlEncodeParser, function(req, res){
-    sql.query("insert into cliente values(?,?,?,?)")
-})
+    var erros = [];
+
+    if(!req.body.user){
+        erros.push({texto: 'Usuario invalido'});
+    }
+
+    if(erros.length > 0){
+        res.render('cliente', {erros: erros})
+    } else {
+        sql.query('select * from cliente where CodCli = ?',
+        [req.body.user], function(err, results, fields){
+            if(err) throw err;
+            if(results.length == 0){
+                req.flash('error_msg', 'Usuario inexistente');
+                res.redirect('/cliente');
+            } else if(results.length > 1){
+                req.flash('error_msg', 'Ops! Algo deu errado no nosso server');
+                res.redirect('/cliente');
+            } else{
+                res.redirect('/home');
+            }
+
+        });
+    }
+});
 // Admin
 
 app.listen(8080, function(req, res){
     console.log('tudo certo');
-})
+});
