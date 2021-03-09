@@ -1,1 +1,19 @@
-oi
+<table>
+    <tr>
+        <td>Modelo</td>
+        <td>Tipo do carro</td>
+        <td>Diaria</td>
+        <td>action</td>
+    </tr>
+    {{#data}}
+    <tr>
+        <td>{{modelo}}</td>
+        <td>{{#if esportivo}}Esportivo{{/if}}{{#if seda}}Sedã{{/if}}</td>
+        <td>{{diaria}}</td>
+        <td><a href="/confirmar-aluguel">Alugar</a></td>
+    </tr>
+    {{/data}}
+</table>
+<form action="/logout" method="POST">
+    <button>Sair</button>
+</form>

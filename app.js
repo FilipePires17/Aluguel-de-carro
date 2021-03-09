@@ -55,7 +55,11 @@ app.get('/cliente_cadastro', function(req, res){
     res.render('cliente_cadastro');
 });
 app.get('/home', isAuth, function(req, res){
-    res.render('home');
+    sql.query('select * from carro order by carro.modelo', (err, results, fields)=>{
+        if(err) throw err;
+        res.render('home', {data: results});
+    })
+    
 });
 app.post('/cliente_cadastro', urlEncodeParser, function(req, res){
     var erros = [];
