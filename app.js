@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const urlEncodeParser = bodyParser.urlencoded({extended:false});
 const app = express();
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const flash = require('connect-flash');
 const sql = mysql.createConnection({
     host: 'localhost',
@@ -12,11 +13,14 @@ const sql = mysql.createConnection({
     password: 'mypassword',
     database: 'mydb'
 });
+const sessionStore = new MySQLStore({}, sql);
 
 app.use(session({
+    key: 'session-cookie',
     secret: 'primeirocrud',
-    resave: true,
-    saveUninitialized: true
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false
 }));
 app.use(flash());
 app.use((req, res, next) => {
@@ -31,6 +35,14 @@ app.use('/js', express.static('js'));
 app.engine('handlebars', handlebars({defaultLayout:'main'}));
 app.set('view engine', 'handlebars');
 
+const isAuth = (req, res, next) => {
+    if(req.session.isAuth){
+        next();
+    } else {
+        res.redirect('/cliente');
+    }
+}
+
 // Inicial
 app.get('/', function(req, res){
     res.render('index');
@@ -42,7 +54,7 @@ app.get('/cliente', function(req, res){
 app.get('/cliente_cadastro', function(req, res){
     res.render('cliente_cadastro');
 });
-app.get('/home', function(req, res){
+app.get('/home', isAuth, function(req, res){
     res.render('home');
 });
 app.post('/cliente_cadastro', urlEncodeParser, function(req, res){
@@ -107,12 +119,19 @@ app.post('/cliente', urlEncodeParser, function(req, res){
                 req.flash('error_msg', 'Ops! Algo deu errado no nosso server');
                 res.redirect('/cliente');
             } else{
+                req.session.isAuth = true;
                 res.redirect('/home');
             }
 
         });
     }
 });
+app.post('/logout', function(req, res){
+    req.session.destroy((err)=>{
+        if(err) throw err;
+        res.redirect('/');
+    })
+})
 // Admin
 
 app.listen(8080, function(req, res){
