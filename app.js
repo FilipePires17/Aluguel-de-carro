@@ -44,24 +44,43 @@ const isAuth = (req, res, next) => {
 }
 
 // Inicial
-app.get('/', function(req, res){
+app.get('/', (req, res) => {
     res.render('index');
 });
 // Cliente
-app.get('/cliente', function(req, res){
+app.get('/cliente', (req, res) => {
     res.render('cliente');
 });
-app.get('/cliente_cadastro', function(req, res){
+app.get('/cliente_cadastro', (req, res) => {
     res.render('cliente_cadastro');
 });
-app.get('/home', isAuth, function(req, res){
-    sql.query('select * from carro order by carro.modelo', (err, results, fields)=>{
+app.get('/home', isAuth, (req, res) => {
+    sql.query('select * from carro order by carro.modelo',
+    (err, results, fields)=>{
         if(err) throw err;
         res.render('home', {data: results});
     })
     
 });
-app.post('/cliente_cadastro', urlEncodeParser, function(req, res){
+app.get('/detalhes-aluguel/:id', isAuth, (req, res) => {
+    const CodCar = Number(req.params.id);
+    sql.query('select * from carro where CodCar = ?', [CodCar],
+    (err, results, fields)=>{
+        if(err) throw err;
+        if(results.length == 0){
+            req.flash('error_msg', 'Carro nao encontrado');
+            res.redirect('/home');
+        } else if(results.length > 1){
+            req.flash('error_msg', 'Ops, erro interno :(');
+            res.redirect('/home');
+        } else {
+            res.render('detalhes-aluguel', {data:results});
+        }
+        
+    })
+    
+})
+app.post('/cliente_cadastro', urlEncodeParser, (req, res) => {
     var erros = [];
     let isAvailable = true;
 
@@ -81,7 +100,7 @@ app.post('/cliente_cadastro', urlEncodeParser, function(req, res){
     if(erros.length > 0){
         res.render("cliente_cadastro", {erros: erros})
     } else {
-        sql.query('select * from cliente', function(err, results, fields){
+        sql.query('select * from cliente', (err, results, fields) => {
             if(err) throw err;
             for (let i = 0; i < results.length; i++) {
                 if(req.body.user == results[0].CodCli){
@@ -103,7 +122,7 @@ app.post('/cliente_cadastro', urlEncodeParser, function(req, res){
     }
 
 });
-app.post('/cliente', urlEncodeParser, function(req, res){
+app.post('/cliente', urlEncodeParser, (req, res) => {
     var erros = [];
 
     if(!req.body.user){
@@ -114,7 +133,7 @@ app.post('/cliente', urlEncodeParser, function(req, res){
         res.render('cliente', {erros: erros})
     } else {
         sql.query('select * from cliente where CodCli = ?',
-        [req.body.user], function(err, results, fields){
+        [req.body.user], (err, results, fields) => {
             if(err) throw err;
             if(results.length == 0){
                 req.flash('error_msg', 'Usuario inexistente');
@@ -124,20 +143,50 @@ app.post('/cliente', urlEncodeParser, function(req, res){
                 res.redirect('/cliente');
             } else{
                 req.session.isAuth = true;
+                req.session.Cliente = req.body.user;
                 res.redirect('/home');
             }
 
         });
     }
 });
-app.post('/logout', function(req, res){
+app.post('/logout', (req, res) => {
     req.session.destroy((err)=>{
         if(err) throw err;
         res.redirect('/');
     })
 })
+app.post('/detalhes-aluguel', urlEncodeParser, (req, res) => {
+    const start_date = req.body.start_date;
+    const finish_date = req.body.finish_date;
+    const CodCli = req.session.Cliente;
+    const CodCar = Number(req.body.codcar);
+    const url = '/detalhes-aluguel/' + req.body.codcar;
+    sql.query('select * from aluguel where ' + 
+    '(? >= DataInicio && ? <= DataFinal) ' +
+    '|| (? >= DataInicio && ? <= DataFinal)',
+    [finish_date, finish_date, start_date, start_date],
+    (err, results, field) => {
+        if(err) throw err;
+        if(results.length > 0){
+            req.flash('error_msg', 'Data indisponivel');
+            res.redirect(url);
+        } else {
+            if(finish_date < start_date){
+                req.flash('error_msg',
+                'Data final nao pode ser menor que data inicial');
+                res.redirect(url);
+            } else {
+                sql.query('insert aluguel(DataInicio, DataFinal, CodCLi, CodCar)' +
+                ' values(?,?,?,?)', [start_date, finish_date, CodCli, CodCar]);
+                req.flash('success_msg', 'Aluguel realizado com sucesso');
+                res.redirect('/home');
+            }
+        }
+    })
+})
 // Admin
 
-app.listen(8080, function(req, res){
+app.listen(8080, (req, res) => {
     console.log('tudo certo');
 });
