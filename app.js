@@ -49,16 +49,16 @@ app.get('/', (req, res) => {
 });
 // Cliente
 app.get('/cliente', (req, res) => {
-    res.render('cliente');
+    res.render('cliente/cliente');
 });
 app.get('/cliente_cadastro', (req, res) => {
-    res.render('cliente_cadastro');
+    res.render('cliente/cliente_cadastro');
 });
 app.get('/home', isAuth, (req, res) => {
     sql.query('select * from carro order by carro.modelo',
     (err, results, fields)=>{
         if(err) throw err;
-        res.render('home', {data: results});
+        res.render('cliente/home', {data: results});
     })
     
 });
@@ -74,7 +74,7 @@ app.get('/detalhes-aluguel/:id', isAuth, (req, res) => {
             req.flash('error_msg', 'Ops, erro interno :(');
             res.redirect('/home');
         } else {
-            res.render('detalhes-aluguel', {data:results});
+            res.render('cliente/detalhes-aluguel', {data:results});
         }
         
     })
@@ -98,7 +98,7 @@ app.post('/cliente_cadastro', urlEncodeParser, (req, res) => {
     }
 
     if(erros.length > 0){
-        res.render("cliente_cadastro", {erros: erros})
+        res.render("cliente/cliente_cadastro", {erros: erros})
     } else {
         sql.query('select * from cliente', (err, results, fields) => {
             if(err) throw err;
@@ -130,7 +130,7 @@ app.post('/cliente', urlEncodeParser, (req, res) => {
     }
 
     if(erros.length > 0){
-        res.render('cliente', {erros: erros})
+        res.render('cliente/cliente', {erros: erros})
     } else {
         sql.query('select * from cliente where CodCli = ?',
         [req.body.user], (err, results, fields) => {
@@ -154,8 +154,8 @@ app.post('/logout', (req, res) => {
     req.session.destroy((err)=>{
         if(err) throw err;
         res.redirect('/');
-    })
-})
+    });
+});
 app.post('/detalhes-aluguel', urlEncodeParser, (req, res) => {
     const start_date = req.body.start_date;
     const finish_date = req.body.finish_date;
@@ -183,9 +183,47 @@ app.post('/detalhes-aluguel', urlEncodeParser, (req, res) => {
                 res.redirect('/home');
             }
         }
-    })
-})
+    });
+});
 // Admin
+app.get('/admin', (req, res) => {
+    res.render('admin/admin');
+});
+app.get('/admin-cliente', (req, res) => {
+    sql.query('select * from cliente', (err, results, fields) => {
+        if(err) throw err;
+        res.render('admin/client_view', ({data: results}));
+    });
+});
+app.get('/deletar/:user', (req, res) => {
+    sql.query('delete from cliente where CodCli = ?', [req.params.user],
+    (err) => {
+        if(err) throw err;
+    });
+    req.flash('success_msg', 'Deletado com sucesso!');
+    res.redirect('/admin-cliente');
+});
+app.get('/atualizar/:user', (req, res) => {
+    sql.query('select * from cliente where CodCli = ?', [req.params.user],
+    (err, results, fields) => {
+        if(err) throw err;
+        if(results.length != 1){
+            req.flash('error_msg', 'Nao sei o que aconteceu, mas deu errado :(');
+            res.redirect('/admin-cliente');
+        } else {
+            res.render('admin/client_update', ({data: results}));
+        }
+    });
+});
+
+app.post('/atualizar', urlEncodeParser, (req, res) => {
+    sql.query('update cliente set CodCli=?, Nome=?, CNH=?, Endereco=?' +
+    ' where CodCli=?',
+    [req.body.user, req.body.name, req.body.cnh, req.body.adress, req.body.user],
+    (err) => {if(err) throw err;});
+    req.flash('success_msg', 'Usuario atualizado com sucesso!');
+    res.redirect('/admin-cliente');
+});
 
 app.listen(8080, (req, res) => {
     console.log('tudo certo');

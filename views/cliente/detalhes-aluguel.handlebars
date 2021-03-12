@@ -1,0 +1,24 @@
+<form action="/detalhes-aluguel" method="POST">  
+    {{#data}}
+    <table>
+        <tr>
+            <td>{{modelo}}</td>
+            <td>{{Cor}}</td>
+            <td>{{#if esportivo}}Esportivo{{/if}}{{#if seda}}Sedã{{/if}}</td>
+        </tr>
+        <tr>
+            <td>{{#if esportivo}}{{velocidade}} km/h{{/if}}
+                {{#if seda}}capacidade de {{passageiros}}{{/if}}</td>
+            <td>{{ano}}</td>
+            <td><input type="text" name="codcar" id="codcar" value="{{CodCar}}"/></td>
+        </tr>
+        <tr>
+            <td><input type="date" name="start_date" id="start_date"/></td>
+            <td><input type="date" name="finish_date" id="finish_date"/></td>
+            <td>{{diaria}}</td>
+        </tr>
+    </table>
+    <input type="submit" name="alugar" id="alugar" value="Alugar"/>
+    {{/data}}
+</form>
+<a href="/home">Voltar</a>

@@ -1,0 +1,21 @@
+<table id="view">
+    <tr>
+        <td>Usuario</td>
+        <td>Nome</td>
+        <td>CNH</td>
+        <td>Endereco</td>
+        <td> </td>
+    </tr>
+    {{#data}}
+    <tr>
+        <td>{{CodCli}}</td>
+        <td>{{Nome}}</td>
+        <td>{{CNH}}</td>
+        <td>{{Endereco}}</td>
+        <td>
+            <a href="/deletar/{{CodCli}}" class="delete">Deletar</a>
+            <a href="/atualizar/{{CodCli}}" class="update">Atualizar</a>
+        </td>
+    </tr>
+    {{/data}}
+</table>
