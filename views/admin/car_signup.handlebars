@@ -1,0 +1,21 @@
+<form name="car_modify" action="/car_signup" method="POST">
+    <label>Modelo</label>
+    <input type="text" name="modelo" id="modelo" placeholder="Modelo"/><br/>
+    <label>Ano</label>
+    <input type="text" name="ano" id="ano" placeholder="..."/><br/>
+    <label>Cor</label>
+    <input type="text" name="cor" id="cor" placeholder="Cor"/><br/>
+    <label>Placa</label>
+    <input type="text" name="placa" id="placa" placeholder="LLLNNNN"/><br/>
+    <label>Tipo</label>
+    <select name="tipo" id="tipo" onchange="alterar_caracteristica()">
+        <option value="esportivo">Esportivo</option>
+        <option value="seda">Sedã</option>
+    </select>
+    <label id="caracteristica">Velocidade</label>
+    <input type="text" name="caracteristica" id="caracteristica"/><br/>
+    <label>Diária</label>
+    <input type="text" name="diaria" id="diaria" placeholder="R$"/><br/>
+    <input type="submit" name="car_signup" id="car_signup" value="Salvar"/>
+</form>
+<a href="/admin-carro">Cancelar</a>

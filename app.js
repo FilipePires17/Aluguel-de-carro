@@ -215,6 +215,38 @@ app.get('/atualizar/:user', (req, res) => {
         }
     });
 });
+app.get('/admin-carro', (req, res) => {
+    sql.query('select * from carro', (err, results) => {
+        if(err) throw err;
+        res.render('admin/car_view', ({data: results}));
+    })
+})
+app.get('/deletar/:car', (req, res) => {
+    sql.query('delete from carro where CodCar = ?', [req.params.car],
+    (err) => {
+        if(err) throw err;
+    });
+    req.flash('success_msg', 'Deletado com sucesso!');
+    res.redirect('/admin-carro');
+});
+app.get('/cadastro-carro/', (req, res) => {
+    res.render('admin/car_signup');
+});
+app.get('/car-update/:id', (req, res) => {
+    sql.query('select * from carro where CodCar = ?', [req.params.id],
+    (err, results) => {
+        if(err) throw err;
+        if(results.length == 0){
+            req.flash('error_msg', 'Carro não encontrado');
+            res.redirect('/admin-carro');
+        } else if(results.length > 1){
+            req.flash('error_msg', 'Algo deu errado, chama o estagiario!');
+            res.redirect('/admin-carro');
+        } else {
+            res.render('admin/car_update', ({data: results}));
+        }
+    });
+});
 
 app.post('/atualizar', urlEncodeParser, (req, res) => {
     sql.query('update cliente set CodCli=?, Nome=?, CNH=?, Endereco=?' +
@@ -224,6 +256,66 @@ app.post('/atualizar', urlEncodeParser, (req, res) => {
     req.flash('success_msg', 'Usuario atualizado com sucesso!');
     res.redirect('/admin-cliente');
 });
+app.post('/car_signup', urlEncodeParser, (req, res) => {
+    let modelo = req.body.modelo;
+    let diaria = req.body.diaria;
+    let ano = req.body.ano;
+    let cor = req.body.cor;
+    let placa = req.body.placa;
+    let esportivo = false;
+    let seda = false;
+    let velocidade = null;
+    let passageiros = null;
+    if(req.body.tipo == 'esportivo'){
+        esportivo = true;
+        velocidade = req.body.caracteristica;
+    } else if(req.body.tipo == 'seda'){
+        seda = true;
+        passageiros = req.body.caracteristica;
+    }
+    sql.query('insert into carro' +
+    '(modelo, diaria, ano, Cor, Placa, ' +
+    'esportivo, seda, velocidade, passageiros)' +
+    ' values(?,?,?,?,?,?,?,?,?)',
+    [modelo, diaria, ano, cor, placa,
+        esportivo, seda, velocidade, passageiros],
+    (err) => {
+        if(err) throw err;
+    });
+    req.flash('success_msg', 'Carro Cadastrado com sucesso');
+    res.redirect('/admin-carro');
+});
+app.post('/car_update/:id', urlEncodeParser, (req, res) => {
+    let modelo = req.body.modelo;
+    let diaria = req.body.diaria;
+    let ano = req.body.ano;
+    let cor = req.body.cor;
+    let placa = req.body.placa;
+    let esportivo = false;
+    let seda = false;
+    let velocidade = null;
+    let passageiros = null;
+    let CodCar = req.body
+    if(req.body.tipo == 'esportivo'){
+        esportivo = true;
+        velocidade = req.body.caracteristica;
+    } else if(req.body.tipo == 'seda'){
+        seda = true;
+        passageiros = req.body.caracteristica;
+    }
+    sql.query('update carro set' +
+    ' modelo=?, diaria=?, ano=?, Cor=?,' +
+    ' Placa=?, esportivo=?, seda=?, velocidade=?, passageiros=?' +
+    ' where CodCar=?',
+    [modelo, diaria, ano, cor, placa,
+        esportivo, seda, velocidade, passageiros, req.params.id],
+    (err) => {
+        if(err) throw err;
+    });
+    req.flash('success_msg', 'Carro atualizado com sucesso');
+    res.redirect('/admin-carro');
+})
+
 
 app.listen(8080, (req, res) => {
     console.log('tudo certo');
