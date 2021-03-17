@@ -221,7 +221,7 @@ app.get('/admin-carro', (req, res) => {
         res.render('admin/car_view', ({data: results}));
     })
 })
-app.get('/deletar/:car', (req, res) => {
+app.get('/deletar-carro/:car', (req, res) => {
     sql.query('delete from carro where CodCar = ?', [req.params.car],
     (err) => {
         if(err) throw err;
@@ -247,6 +247,34 @@ app.get('/car-update/:id', (req, res) => {
         }
     });
 });
+app.get('/admin-aluguel', (req, res) => {
+    sql.query('select cliente.nome, carro.modelo, carro.diaria, ' +
+    'aluguel.DataInicio, aluguel.DataFinal, aluguel.CodAlu from ((aluguel ' + 
+    'inner join cliente on aluguel.CodCli = cliente.CodCli) ' +
+    'inner join carro on aluguel.CodCar = carro.CodCar)', (err, results) => {
+        if(err) throw err;
+        res.render('admin/rent_view', ({data: results}));
+    });
+});
+app.get('/deletar-aluguel/:id', (req, res) => {
+    sql.query('delete from carro where CodAlu = ?', [req.params.id],
+    (err) => {
+        if(err) throw err;
+    });
+    req.flash('success_msg', 'Registro de aluguel deletado!');
+    res.redirect('/admin-aluguel');
+});
+app.get('/atualizar-aluguel/:id', (req, res) => {
+    sql.query('select cliente.nome, carro.modelo, carro.diaria, ' +
+    'aluguel.DataInicio, aluguel.DataFinal, aluguel.CodAlu from ((aluguel ' + 
+    'inner join cliente on aluguel.CodCli = cliente.CodCli) ' +
+    'inner join carro on aluguel.CodCar = carro.CodCar) ' +
+    'where aluguel.CodAlu = ?', [req.params.id], (err, results) => {
+        if(err) throw err;
+        res.render('admin/rent_update', ({data: results}));
+    });
+})
+
 
 app.post('/atualizar', urlEncodeParser, (req, res) => {
     sql.query('update cliente set CodCli=?, Nome=?, CNH=?, Endereco=?' +
@@ -273,10 +301,10 @@ app.post('/car_signup', urlEncodeParser, (req, res) => {
         seda = true;
         passageiros = req.body.caracteristica;
     }
-    sql.query('insert into carro' +
+    sql.query('insert into carro ' +
     '(modelo, diaria, ano, Cor, Placa, ' +
-    'esportivo, seda, velocidade, passageiros)' +
-    ' values(?,?,?,?,?,?,?,?,?)',
+    'esportivo, seda, velocidade, passageiros) ' +
+    'values(?,?,?,?,?,?,?,?,?)',
     [modelo, diaria, ano, cor, placa,
         esportivo, seda, velocidade, passageiros],
     (err) => {
@@ -295,7 +323,7 @@ app.post('/car_update/:id', urlEncodeParser, (req, res) => {
     let seda = false;
     let velocidade = null;
     let passageiros = null;
-    let CodCar = req.body
+    let cod_car = req.params.id
     if(req.body.tipo == 'esportivo'){
         esportivo = true;
         velocidade = req.body.caracteristica;
@@ -303,17 +331,27 @@ app.post('/car_update/:id', urlEncodeParser, (req, res) => {
         seda = true;
         passageiros = req.body.caracteristica;
     }
-    sql.query('update carro set' +
-    ' modelo=?, diaria=?, ano=?, Cor=?,' +
-    ' Placa=?, esportivo=?, seda=?, velocidade=?, passageiros=?' +
-    ' where CodCar=?',
+    sql.query('update carro set ' +
+    'modelo=?, diaria=?, ano=?, Cor=?, ' +
+    'Placa=?, esportivo=?, seda=?, velocidade=?, passageiros=? ' +
+    'where CodCar=?',
     [modelo, diaria, ano, cor, placa,
-        esportivo, seda, velocidade, passageiros, req.params.id],
+        esportivo, seda, velocidade, passageiros, cod_car],
     (err) => {
         if(err) throw err;
     });
     req.flash('success_msg', 'Carro atualizado com sucesso');
     res.redirect('/admin-carro');
+});
+app.post('/atualizar-aluguel/id', urlEncodeParser, (req, res) => {
+    let date_start = req.body.date_start;
+    let date_end = req.body.date_end;
+    let cod_alu = req.params.id;
+    sql.query('update aluguel set ' +
+    'DataInicio=?, DataFinal=? where CodAlu = ?',
+    [date_start, date_end, cod_alu], (err) => {if(err) throw err;});
+    req.flash('success_msg', 'Datas do aluguel atualizadas');
+    res.redirect('/admin-aluguel');
 })
 
 

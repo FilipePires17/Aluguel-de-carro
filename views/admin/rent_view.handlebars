@@ -1,0 +1,24 @@
+<a href="/admin">Voltar</a>
+<table id="view">
+    <tr>
+        <td>Nome do Cliente</td>
+        <td>Carro</td>
+        <td>Diaria</td>
+        <td>Data de inicio</td>
+        <td>Data de término</td>
+        <td> </td>
+    </tr>
+    {{#data}}
+    <tr>
+        <td>{{nome}}</td>
+        <td>{{modelo}}</td>
+        <td>{{diaria}}</td>
+        <td>{{DataInicio}}</td>
+        <td>{{DataFinal}}</td>
+        <td>
+            <a href="/deletar-aluguel/{{CodAlu}}" class="delete">Deletar</a>
+            <a href="/atualizar-aluguel/{{CodAlu}}" class="update">Atualizar</a>
+        </td>
+    </tr>
+    {{/data}}
+</table>
