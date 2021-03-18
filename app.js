@@ -2,11 +2,12 @@ const express = require('express');
 const mysql = require('mysql');
 const handlebars = require('express-handlebars');
 const bodyParser = require('body-parser');
-const urlEncodeParser = bodyParser.urlencoded({extended:false});
-const app = express();
 const session = require('express-session');
 const MySQLStore = require('express-mysql-session')(session);
 const flash = require('connect-flash');
+const bcrypt = require('bcryptjs');
+const app = express();
+const urlEncodeParser = bodyParser.urlencoded({extended:false});
 const sql = mysql.createConnection({
     host: 'localhost',
     user: 'nodeuser',
@@ -35,6 +36,8 @@ app.use('/js', express.static('js'));
 app.engine('handlebars', handlebars({defaultLayout:'main'}));
 app.set('view engine', 'handlebars');
 
+const saltRounds = 10;
+
 const isAuth = (req, res, next) => {
     if(req.session.isAuth){
         next();
@@ -56,7 +59,7 @@ app.get('/cliente_cadastro', (req, res) => {
 });
 app.get('/home', isAuth, (req, res) => {
     sql.query('select * from carro order by carro.modelo',
-    (err, results, fields)=>{
+    (err, results)=>{
         if(err) throw err;
         res.render('cliente/home', {data: results});
     })
@@ -65,7 +68,7 @@ app.get('/home', isAuth, (req, res) => {
 app.get('/detalhes-aluguel/:id', isAuth, (req, res) => {
     const CodCar = Number(req.params.id);
     sql.query('select * from carro where CodCar = ?', [CodCar],
-    (err, results, fields)=>{
+    (err, results)=>{
         if(err) throw err;
         if(results.length == 0){
             req.flash('error_msg', 'Carro nao encontrado');
@@ -80,30 +83,41 @@ app.get('/detalhes-aluguel/:id', isAuth, (req, res) => {
     })
     
 })
-app.post('/cliente_cadastro', urlEncodeParser, (req, res) => {
+app.post('/cliente_cadastro', urlEncodeParser, async (req, res) => {
     var erros = [];
     let isAvailable = true;
+    let user = req.body.user;
+    let pass = req.body.pass;
+    let name = req.body.name;
+    let cnh = req.body.cnh;
+    let adress = req.body.adress;
+    let phone = req.body.phone;
 
-    if(!req.body.user){
+    if(!user){
         erros.push({texto: "Usuario invalido"});
     }
-    if(!req.body.name){
+    if(!pass){
+        erros.push({texto: "Senha invalida"});
+    }
+    if(!name){
         erros.push({texto: "Nome invalido"});
     }
-    if(!req.body.cnh){
+    if(!cnh){
         erros.push({texto: "CNH invalida"});
     }
-    if(!req.body.adress){
+    if(!adress){
         erros.push({texto: "Endereço invalido"});
     }
+
+    const hashedPass = await bcrypt.hash(pass, 10);
 
     if(erros.length > 0){
         res.render("cliente/cliente_cadastro", {erros: erros})
     } else {
-        sql.query('select * from cliente', (err, results, fields) => {
+        sql.query('select * from cliente', (err, results) => {
             if(err) throw err;
             for (let i = 0; i < results.length; i++) {
-                if(req.body.user == results[0].CodCli){
+                if(user == results[0].CodCli){
                     isAvailable = false;
                     req.flash('error_msg', 'Nome de usuario indisponivel');
                     res.redirect('/cliente_cadastro');
@@ -111,10 +125,10 @@ app.post('/cliente_cadastro', urlEncodeParser, (req, res) => {
                 }                
             }
         if(isAvailable){
-            sql.query('insert into cliente values(?, ?, ?, ?)',
-            [req.body.user, req.body.name, req.body.cnh, req.body.adress]);
+            sql.query('insert into cliente values(?, ?, ?, ?, ?)',
+            [user, name, cnh, adress, hashedPass]);
             sql.query('insert into telefone values(?, ?)',
-            [req.body.user, req.body.phone]);
+            [user, phone]);
             req.flash('success_msg', 'Cadastrado com sucesso');
             res.redirect('/cliente');
         }
@@ -122,10 +136,12 @@ app.post('/cliente_cadastro', urlEncodeParser, (req, res) => {
     }
 
 });
-app.post('/cliente', urlEncodeParser, (req, res) => {
+app.post('/cliente', urlEncodeParser, async (req, res) => {
     var erros = [];
+    const user = req.body.user;
+    const pass = req.body.pass;
 
-    if(!req.body.user){
+    if(!user){
         erros.push({texto: 'Usuario invalido'});
     }
 
@@ -133,7 +149,7 @@ app.post('/cliente', urlEncodeParser, (req, res) => {
         res.render('cliente/cliente', {erros: erros})
     } else {
         sql.query('select * from cliente where CodCli = ?',
-        [req.body.user], (err, results, fields) => {
+        [user], async (err, results) => {
             if(err) throw err;
             if(results.length == 0){
                 req.flash('error_msg', 'Usuario inexistente');
@@ -142,11 +158,16 @@ app.post('/cliente', urlEncodeParser, (req, res) => {
                 req.flash('error_msg', 'Ops! Algo deu errado no nosso server');
                 res.redirect('/cliente');
             } else{
-                req.session.isAuth = true;
-                req.session.Cliente = req.body.user;
-                res.redirect('/home');
+                const isMatch = await bcrypt.compare(pass, results[0].senha);
+                if(isMatch){
+                    req.session.isAuth = true;
+                    req.session.Cliente = req.body.user;
+                    res.redirect('/home');
+                } else {
+                    req.flash('error_msg', 'Senha inválida');
+                    res.redirect('/cliente');
+                }
             }
-
         });
     }
 });
@@ -166,7 +187,7 @@ app.post('/detalhes-aluguel', urlEncodeParser, (req, res) => {
     '(? >= DataInicio && ? <= DataFinal) ' +
     '|| (? >= DataInicio && ? <= DataFinal)',
     [finish_date, finish_date, start_date, start_date],
-    (err, results, field) => {
+    (err, results) => {
         if(err) throw err;
         if(results.length > 0){
             req.flash('error_msg', 'Data indisponivel');
@@ -190,7 +211,7 @@ app.get('/admin', (req, res) => {
     res.render('admin/admin');
 });
 app.get('/admin-cliente', (req, res) => {
-    sql.query('select * from cliente', (err, results, fields) => {
+    sql.query('select * from cliente', (err, results) => {
         if(err) throw err;
         res.render('admin/client_view', ({data: results}));
     });
@@ -205,7 +226,7 @@ app.get('/deletar/:user', (req, res) => {
 });
 app.get('/atualizar/:user', (req, res) => {
     sql.query('select * from cliente where CodCli = ?', [req.params.user],
-    (err, results, fields) => {
+    (err, results) => {
         if(err) throw err;
         if(results.length != 1){
             req.flash('error_msg', 'Nao sei o que aconteceu, mas deu errado :(');
