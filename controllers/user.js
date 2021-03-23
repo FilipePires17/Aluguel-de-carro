@@ -4,7 +4,7 @@ export const getUsers = (req, res) => {
     sql.query('select * from cliente', (err, results) => {
         if(err) return res.status(500).send({error: err});
         res.status(200).send({
-            resultado: results
+            result: results
         });
     });
 }

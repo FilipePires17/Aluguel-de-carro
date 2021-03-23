@@ -3,6 +3,7 @@ import morgan from 'morgan';
 import bodyParser from 'body-parser';
 import usersRoutes from './routes/user.js';
 import carsRoutes from './routes/car.js';
+import rentsRoutes from './routes/rent.js'
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -28,6 +29,7 @@ app.use((req, res, next) => {
 
 app.use('/cliente', usersRoutes);
 app.use('/carro', carsRoutes);
+app.use('/rent', rentsRoutes);
 
 app.get('/', (req, res) => {res.status(200).send({mensagem: "Bem vindo(a)"})});
 
