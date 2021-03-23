@@ -3,21 +3,17 @@
   "version": "1.0.0",
   "description": "sistema que possibilita que usuarios cadastrados aluguem carros",
   "main": "app.js",
+  "type": "module",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "body-parser": "^1.19.0",
-    "connect-flash": "^0.1.1",
     "express": "^4.17.1",
-    "express-handlebars": "^5.2.1",
-    "express-mysql-session": "^2.1.5",
-    "express-session": "^1.17.1",
-    "mysql": "^2.18.1",
-    "nodemon": "^2.0.7",
-    "req-flash": "0.0.3"
+    "morgan": "^1.10.0",
+    "mysql": "^2.18.1"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "nodemon app.js"
   },
   "repository": {
     "type": "git",
